@@ -1,6 +1,11 @@
 (ns jsx-fun.core
-  (:require [clojure.java.io :as io])
-  (:import [javax.script ScriptEngineManager]))
+  (:require [clojure.java.io :as io]
+            [cljs.closure :as cl])
+  (:import [javax.script ScriptEngineManager]
+           [java.util.logging Level]
+           [com.google.javascript.jscomp
+            ProcessCommonJSModules CompilerOptions SourceFile Result
+            JSError CompilerOptions$LanguageMode]))
 
 (defn jsx-engine []
   (let [nashorn (.getEngineByName (ScriptEngineManager.) "nashorn")]
@@ -9,21 +14,21 @@
       (.eval (io/reader (io/resource "com/facebook/jsx.js"))))))
 
 (defn transform
-  [jsx-eng src dest]
+  [jsx-eng src]
   (let [options
         (.eval jsx-eng
           "(function(){ return {stripTypes: true, harmony: true};})()")
         jsxt (.eval jsx-eng "global.JSXTransformer")]
-    (spit (io/file dest)
-      (.get
-        (.invokeMethod jsx-eng jsxt "transform"
-          (object-array [(slurp src) options]))
-        "code"))))
+    (.get
+      (.invokeMethod jsx-eng jsxt "transform"
+        (object-array [src options]))
+      "code")))
 
 (comment
   (def jsx-eng (jsx-engine))
 
-  (transform jsx-eng
-    (io/file "resources/ScrollResponder.js")
-    (io/file "resources/ScrollResponder.out.js"))
+  (spit
+    (io/file "resources/ScrollResponder.out.js")
+    (transform jsx-eng
+      (slurp (io/file "resources/ScrollResponder.js"))))
   )
