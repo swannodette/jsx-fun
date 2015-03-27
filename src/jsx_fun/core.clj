@@ -2,10 +2,30 @@
   (:require [clojure.java.io :as io]
             [cljs.closure :as cl])
   (:import [javax.script ScriptEngineManager]
+           [java.util List]
            [java.util.logging Level]
            [com.google.javascript.jscomp
             ProcessCommonJSModules CompilerOptions SourceFile Result
             JSError CompilerOptions$LanguageMode]))
+
+(defn set-options [opts ^CompilerOptions compiler-options]
+  (doseq [[k v] opts]
+    (condp = k
+      :type
+      (case v
+        :commonjs (.setProcessCommonJSModules compiler-options true)
+        :amd (doto compiler-options
+               (.setProcessCommonJSModules true)
+               (.setTransformAMDToCJSModules true))
+        :es6 (doto compiler-options
+               (.setLanguageIn CompilerOptions$LanguageMode/ECMASCRIPT6)
+               (.setLanguageOut CompilerOptions$LanguageMode/ECMASCRIPT5)))
+      :lang-in
+      (case v
+        :es5 (.setLanguageIn compiler-options
+               CompilerOptions$LanguageMode/ECMASCRIPT5))))
+
+  compiler-options)
 
 (defn jsx-engine []
   (let [nashorn (.getEngineByName (ScriptEngineManager.) "nashorn")]
@@ -13,7 +33,7 @@
       (.eval "var global = {};")
       (.eval (io/reader (io/resource "com/facebook/jsx.js"))))))
 
-(defn transform
+(defn transform-jsx
   [jsx-eng src]
   (let [options
         (.eval jsx-eng
@@ -24,11 +44,27 @@
         (object-array [src options]))
       "code")))
 
+(defn transform-commonjs
+  [filename src]
+  (let [^List externs '()
+        ^List inputs [(SourceFile/fromCode filename src)]
+        ^CompilerOptions options (set-options {:lang-in :es5 :type :commonjs} (CompilerOptions.))
+        compiler (cl/make-closure-compiler)
+        ^Result result (.compile compiler externs inputs options)]
+    (if (.success result)
+      (.toSource compiler)
+      (cl/report-failure result))))
+
 (comment
   (def jsx-eng (jsx-engine))
 
   (spit
     (io/file "resources/ScrollResponder.out.js")
-    (transform jsx-eng
+    (transform-jsx jsx-eng
+      (slurp (io/file "resources/ScrollResponder.js"))))
+
+  (transform-commonjs
+    "ScrollResponder.js"
+    (transform-jsx jsx-eng
       (slurp (io/file "resources/ScrollResponder.js"))))
   )
