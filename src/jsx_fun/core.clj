@@ -16,7 +16,9 @@
       :lang-in
       (case v
         :es5 (.setLanguageIn compiler-options
-               CompilerOptions$LanguageMode/ECMASCRIPT5))))
+               CompilerOptions$LanguageMode/ECMASCRIPT5))
+      :pretty-print
+      (set! (.prettyPrint compiler-options) v)))
   compiler-options)
 
 (defn jsx-engine []
@@ -40,7 +42,8 @@
 (defn transform-commonjs
   [filename src]
   (let [js      [(SourceFile/fromCode filename src)]
-        options (set-options {:lang-in :es5} (CompilerOptions.))
+        options (set-options {:lang-in :es5 :pretty-print true}
+                  (CompilerOptions.))
         comp    (doto (cl/make-closure-compiler)
                   (.init '() js options))
         root    (.parse comp (first js))]
@@ -65,10 +68,10 @@
 (comment
   (spit
     (io/file "resources/ScrollResponder.out.js")
-    (transform-jsx jsx-eng
-      (slurp (io/file "resources/ScrollResponder.js"))))
-
-  (transform-commonjs
-    "ScrollResponder.js"
     (transform-jsx (slurp (io/file "resources/ScrollResponder.js"))))
+
+  (println
+    (transform-commonjs
+      "ScrollResponder.js"
+      (transform-jsx (slurp (io/file "resources/ScrollResponder.js")))))
   )
