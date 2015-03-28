@@ -71,25 +71,27 @@
       (slurp (io/file "resources/ScrollResponder.js"))))
 
   (let [js      [(SourceFile/fromCode
-                    "ScrollResponder.js"
+                   "ScrollResponder.js"
                    (slurp (io/file "resources/ScrollResponder.js")))]
         options (set-options
                   {:lang-in :es5 :type :commonjs}
                   (CompilerOptions.))
         comp    (doto (cl/make-closure-compiler)
                   (.init '() js options))
-        module  (JSModule. "[singleton]")
-        input   (do
-                  (doseq [x js]
-                     (.add module x))
-                  (first (.getInputs module)))
-        root    (.getAstRoot input comp)]
-    (.setCompiler input comp)
-    (.process
+        ;module  (JSModule. "[singleton]")
+        ;input   (do
+        ;          (doseq [x js]
+        ;             (.add module x))
+        ;          (first (.getInputs module)))
+        ]
+    (.parse comp)
+    #_(.setCompiler input comp)
+    #_(.process
       (ProcessCommonJSModules. comp
         (ES6ModuleLoader. comp "resources/")
         false)
       nil root)
-    (.toSource comp root))
+    (.toSource comp)
+    )
 
 )
