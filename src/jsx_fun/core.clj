@@ -70,9 +70,14 @@
     (transform-jsx jsx-eng
       (slurp (io/file "resources/ScrollResponder.js"))))
 
+  ;; NOTE: wasted some time processing the wrong thing!
+  ;; need to process the JSX compiled thing
+
+  ;; getting warmer!
+
   (let [js      [(SourceFile/fromCode
-                   "ScrollResponder.js"
-                   (slurp (io/file "resources/ScrollResponder.js")))]
+                   "ScrollResponder.out.js"
+                   (slurp (io/file "resources/ScrollResponder.out.js")))]
         options (set-options
                   {:lang-in :es5 :type :commonjs}
                   (CompilerOptions.))
@@ -83,15 +88,13 @@
         ;          (doseq [x js]
         ;             (.add module x))
         ;          (first (.getInputs module)))
-        ]
-    (.parse comp)
-    #_(.setCompiler input comp)
-    #_(.process
+        root (.parse comp
+               (first js))]
+    (.process
       (ProcessCommonJSModules. comp
-        (ES6ModuleLoader. comp "resources/")
+        (ES6ModuleLoader. comp "./")
         false)
       nil root)
-    (.toSource comp)
-    )
+    (.toSource comp root))
 
 )
