@@ -96,6 +96,7 @@
       "ScrollResponder.js"
       (transform-jsx (slurp (io/file "resources/ScrollResponder.js")))))
 
+  ;; based on http://slieb.org/blog/parseJavaScriptWithGoogleClosure/
   (let [config       (ParserRunner/createConfig
                        true Config$LanguageMode/ECMASCRIPT5 true nil)
         err-reporter (SimpleErrorReporter.)
