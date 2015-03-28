@@ -59,9 +59,7 @@
 
 (defn transform-commonjs
   [filename src]
-  (let [js      [(SourceFile/fromCode
-                   filename
-                   src)]
+  (let [js      [(SourceFile/fromCode filename src)]
         options (set-options
                   {:lang-in :es5 :type :commonjs}
                   (CompilerOptions.))
