@@ -5,8 +5,10 @@
            [java.util List]
            [java.util.logging Level]
            [com.google.javascript.jscomp
-            ProcessCommonJSModules CompilerOptions SourceFile Result
-            JSError CompilerOptions$LanguageMode]))
+            ES6ModuleLoader ProcessCommonJSModules CompilerOptions SourceFile
+            Result JSModule JSError CompilerOptions$LanguageMode
+            AbstractCompiler]
+           [com.google.javascript.jscomp.Compiler]))
 
 (defn set-options [opts ^CompilerOptions compiler-options]
   (doseq [[k v] opts]
@@ -67,4 +69,27 @@
     "ScrollResponder.js"
     (transform-jsx jsx-eng
       (slurp (io/file "resources/ScrollResponder.js"))))
-  )
+
+  (let [js      [(SourceFile/fromCode
+                    "ScrollResponder.js"
+                   (slurp (io/file "resources/ScrollResponder.js")))]
+        options (set-options
+                  {:lang-in :es5 :type :commonjs}
+                  (CompilerOptions.))
+        comp    (doto (cl/make-closure-compiler)
+                  (.init '() js options))
+        module  (JSModule. "[singleton]")
+        input   (do
+                  (doseq [x js]
+                     (.add module x))
+                  (first (.getInputs module)))
+        root    (.getAstRoot input comp)]
+    (.setCompiler input comp)
+    (.process
+      (ProcessCommonJSModules. comp
+        (ES6ModuleLoader. comp "resources/")
+        false)
+      nil root)
+    (.toSource comp root))
+
+)
