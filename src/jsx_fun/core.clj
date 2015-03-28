@@ -55,16 +55,6 @@
       nil root)
     (.toSource comp root)))
 
-(defn transform-commonjs
-  [filename src]
-  (let [js      [(SourceFile/fromCode filename src)]
-        options (set-options {:lang-in :es5 :pretty-print true}
-                  (CompilerOptions.))
-        comp    (doto (cl/make-closure-compiler)
-                  (.init '() js options))
-        root    (.parse comp (first js))]
-    (.toSource comp root)))
-
 (defn node-visitor []
   (reify
     NodeUtil$Visitor
