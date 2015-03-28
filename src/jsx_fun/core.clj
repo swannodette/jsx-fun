@@ -71,7 +71,7 @@
     (visit [_ node]
       (println (Token/name (.getType node)))
       (when-let [js-doc (.getJSDocInfo node)]
-        (println js-doc)))))
+        (println (.toStringVerbose js-doc))))))
 
 ;(defn transform-commonjs
 ;  [filename src]
@@ -110,4 +110,7 @@
       (.comments parse-result))
     (NodeUtil/visitPreOrder
       (.ast parse-result) visitor (Predicates/alwaysTrue)))
+
+  ;; the above is super useful but we should probably use a regex
+  ;; to grab @providesModules
   )
