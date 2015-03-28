@@ -63,7 +63,7 @@
         comp    (doto (cl/make-closure-compiler)
                   (.init '() js options))
         root    (.parse comp (first js))]
-    (.getJSDoc root)))
+    (.toSource comp root)))
 
 (defn node-visitor []
   (reify
