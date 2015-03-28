@@ -46,7 +46,7 @@
         (object-array [src options]))
       "code")))
 
-(defn transform-commonjs
+#_(defn transform-commonjs
   [filename src]
   (let [^List externs '()
         ^List inputs [(SourceFile/fromCode filename src)]
@@ -57,6 +57,24 @@
       (.toSource compiler)
       (cl/report-failure result))))
 
+(defn transform-commonjs
+  [filename src]
+  (let [js      [(SourceFile/fromCode
+                   filename
+                   src)]
+        options (set-options
+                  {:lang-in :es5 :type :commonjs}
+                  (CompilerOptions.))
+        comp    (doto (cl/make-closure-compiler)
+                  (.init '() js options))
+        root    (.parse comp (first js))]
+    (.process
+      (ProcessCommonJSModules. comp
+        (ES6ModuleLoader. comp "./")
+        false)
+      nil root)
+    (.toSource comp root)))
+
 (comment
   (def jsx-eng (jsx-engine))
 
@@ -66,7 +84,7 @@
       (slurp (io/file "resources/ScrollResponder.js"))))
 
   (transform-commonjs
-    "ScrollResponder.js"
+    "ScrollResponder.out.js"
     (transform-jsx jsx-eng
       (slurp (io/file "resources/ScrollResponder.js"))))
 
