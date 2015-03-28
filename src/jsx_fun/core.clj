@@ -17,7 +17,6 @@
       (case v
         :es5 (.setLanguageIn compiler-options
                CompilerOptions$LanguageMode/ECMASCRIPT5))))
-
   compiler-options)
 
 (defn jsx-engine []
@@ -70,34 +69,6 @@
       (slurp (io/file "resources/ScrollResponder.js"))))
 
   (transform-commonjs
-    "ScrollResponder.out.js"
+    "ScrollResponder.js"
     (transform-jsx (slurp (io/file "resources/ScrollResponder.js"))))
-
-  ;; NOTE: wasted some time processing the wrong thing!
-  ;; need to process the JSX compiled thing
-
-  ;; getting warmer!
-
-  (let [js      [(SourceFile/fromCode
-                   "ScrollResponder.out.js"
-                   (slurp (io/file "resources/ScrollResponder.out.js")))]
-        options (set-options
-                  {:lang-in :es5 :type :commonjs}
-                  (CompilerOptions.))
-        comp    (doto (cl/make-closure-compiler)
-                  (.init '() js options))
-        ;module  (JSModule. "[singleton]")
-        ;input   (do
-        ;          (doseq [x js]
-        ;             (.add module x))
-        ;          (first (.getInputs module)))
-        root (.parse comp
-               (first js))]
-    (.process
-      (ProcessCommonJSModules. comp
-        (ES6ModuleLoader. comp "./")
-        false)
-      nil root)
-    (.toSource comp root))
-
-)
+  )
