@@ -1,14 +1,15 @@
 (ns jsx-fun.core
   (:require [clojure.java.io :as io]
             [cljs.closure :as cl])
-  (:import [javax.script ScriptEngineManager]
-           [java.util List]
-           [java.util.logging Level]
+  (:import [com.google.common.base Predicates]
+           [javax.script ScriptEngineManager]
            [com.google.javascript.jscomp
             ES6ModuleLoader ProcessCommonJSModules CompilerOptions SourceFile
-            Result JSModule JSError CompilerOptions$LanguageMode
-            AbstractCompiler]
-           [com.google.javascript.jscomp.Compiler]))
+            CompilerOptions$LanguageMode NodeUtil NodeUtil$Visitor]
+           [com.google.javascript.jscomp.parsing
+            Config Config$LanguageMode ParserRunner]
+           [com.google.javascript.rhino
+            Node Token ErrorReporter SimpleErrorReporter]))
 
 (defn set-options [opts ^CompilerOptions compiler-options]
   (doseq [[k v] opts]
@@ -54,6 +55,24 @@
       nil root)
     (.toSource comp root)))
 
+(defn transform-commonjs
+  [filename src]
+  (let [js      [(SourceFile/fromCode filename src)]
+        options (set-options {:lang-in :es5 :pretty-print true}
+                  (CompilerOptions.))
+        comp    (doto (cl/make-closure-compiler)
+                  (.init '() js options))
+        root    (.parse comp (first js))]
+    (.getJSDoc root)))
+
+(defn node-visitor []
+  (reify
+    NodeUtil$Visitor
+    (visit [_ node]
+      (println (Token/name (.getType node)))
+      (when-let [js-doc (.getJSDocInfo node)]
+        (println js-doc)))))
+
 ;(defn transform-commonjs
 ;  [filename src]
 ;  (let [^List externs '()
@@ -70,8 +89,24 @@
     (io/file "resources/ScrollResponder.out.js")
     (transform-jsx (slurp (io/file "resources/ScrollResponder.js"))))
 
+  ;; the file name is used as the module name
+  ;; we will have to extract this from @providesModule
   (println
     (transform-commonjs
       "ScrollResponder.js"
       (transform-jsx (slurp (io/file "resources/ScrollResponder.js")))))
+
+  (let [config       (ParserRunner/createConfig
+                       true Config$LanguageMode/ECMASCRIPT5 true nil)
+        err-reporter (SimpleErrorReporter.)
+        source-file  (SourceFile/fromFile
+                       (io/file "resources/ScrollResponder.js"))
+        parse-result (ParserRunner/parse
+                       source-file (.getCode source-file)
+                       config err-reporter)
+        visitor      (node-visitor)]
+    (println
+      (.comments parse-result))
+    (NodeUtil/visitPreOrder
+      (.ast parse-result) visitor (Predicates/alwaysTrue)))
   )
