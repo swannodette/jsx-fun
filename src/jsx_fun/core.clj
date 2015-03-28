@@ -46,17 +46,6 @@
         (object-array [src options]))
       "code")))
 
-#_(defn transform-commonjs
-  [filename src]
-  (let [^List externs '()
-        ^List inputs [(SourceFile/fromCode filename src)]
-        ^CompilerOptions options (set-options {:lang-in :es5 :type :commonjs} (CompilerOptions.))
-        compiler (cl/make-closure-compiler)
-        ^Result result (.compile compiler externs inputs options)]
-    (if (.success result)
-      (.toSource compiler)
-      (cl/report-failure result))))
-
 (defn transform-commonjs
   [filename src]
   (let [js      [(SourceFile/fromCode filename src)]
@@ -72,6 +61,17 @@
         false)
       nil root)
     (.toSource comp root)))
+
+;(defn transform-commonjs
+;  [filename src]
+;  (let [^List externs '()
+;        ^List inputs [(SourceFile/fromCode filename src)]
+;        ^CompilerOptions options (set-options {:lang-in :es5 :type :commonjs} (CompilerOptions.))
+;        compiler (cl/make-closure-compiler)
+;        ^Result result (.compile compiler externs inputs options)]
+;    (if (.success result)
+;      (.toSource compiler)
+;      (cl/report-failure result))))
 
 (comment
   (def jsx-eng (jsx-engine))
