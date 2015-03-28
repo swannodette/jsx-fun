@@ -13,15 +13,6 @@
 (defn set-options [opts ^CompilerOptions compiler-options]
   (doseq [[k v] opts]
     (condp = k
-      :type
-      (case v
-        :commonjs (.setProcessCommonJSModules compiler-options true)
-        :amd (doto compiler-options
-               (.setProcessCommonJSModules true)
-               (.setTransformAMDToCJSModules true))
-        :es6 (doto compiler-options
-               (.setLanguageIn CompilerOptions$LanguageMode/ECMASCRIPT6)
-               (.setLanguageOut CompilerOptions$LanguageMode/ECMASCRIPT5)))
       :lang-in
       (case v
         :es5 (.setLanguageIn compiler-options
@@ -36,22 +27,21 @@
       (.eval (io/reader (io/resource "com/facebook/jsx.js"))))))
 
 (defn transform-jsx
-  [jsx-eng src]
-  (let [options
-        (.eval jsx-eng
-          "(function(){ return {stripTypes: true, harmony: true};})()")
-        jsxt (.eval jsx-eng "global.JSXTransformer")]
-    (.get
-      (.invokeMethod jsx-eng jsxt "transform"
-        (object-array [src options]))
-      "code")))
+  ([src] (transform-jsx (jsx-engine) src))
+  ([jsx-eng src]
+   (let [options
+         (.eval jsx-eng
+           "(function(){ return {stripTypes: true, harmony: true};})()")
+         jsxt (.eval jsx-eng "global.JSXTransformer")]
+     (.get
+       (.invokeMethod jsx-eng jsxt "transform"
+         (object-array [src options]))
+       "code"))))
 
 (defn transform-commonjs
   [filename src]
   (let [js      [(SourceFile/fromCode filename src)]
-        options (set-options
-                  {:lang-in :es5 :type :commonjs}
-                  (CompilerOptions.))
+        options (set-options {:lang-in :es5} (CompilerOptions.))
         comp    (doto (cl/make-closure-compiler)
                   (.init '() js options))
         root    (.parse comp (first js))]
@@ -74,8 +64,6 @@
 ;      (cl/report-failure result))))
 
 (comment
-  (def jsx-eng (jsx-engine))
-
   (spit
     (io/file "resources/ScrollResponder.out.js")
     (transform-jsx jsx-eng
@@ -83,8 +71,7 @@
 
   (transform-commonjs
     "ScrollResponder.out.js"
-    (transform-jsx jsx-eng
-      (slurp (io/file "resources/ScrollResponder.js"))))
+    (transform-jsx (slurp (io/file "resources/ScrollResponder.js"))))
 
   ;; NOTE: wasted some time processing the wrong thing!
   ;; need to process the JSX compiled thing
