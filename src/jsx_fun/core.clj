@@ -1,5 +1,6 @@
 (ns jsx-fun.core
   (:require [clojure.java.io :as io]
+            [clojure.string :as string]
             [cljs.closure :as cl])
   (:import [com.google.common.base Predicates]
            [javax.script ScriptEngineManager]
@@ -55,6 +56,13 @@
       nil root)
     (.toSource comp root)))
 
+(defn provides [^String src]
+  (last
+    (string/split
+      (some #(when (re-find #"@providesModule" %) %)
+        (string/split src #"\n"))
+      #"\s+")))
+
 (defn node-visitor []
   (reify
     NodeUtil$Visitor
@@ -85,6 +93,14 @@
     (transform-commonjs
       "ScrollResponder.js"
       (transform-jsx (slurp (io/file "resources/ScrollResponder.js")))))
+
+  (println
+    (transform-commonjs
+      "StatusBarIOS"
+      (transform-jsx (slurp (io/file "resources/StatusBarIOS.ios.js")))))
+
+  (provides
+    (transform-jsx (slurp (io/file "resources/StatusBarIOS.ios.js"))))
 
   ;; based on http://slieb.org/blog/parseJavaScriptWithGoogleClosure/
   (let [config       (ParserRunner/createConfig
