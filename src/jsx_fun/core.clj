@@ -86,7 +86,8 @@
     (file-seq dir)))
 
 (defn deps-graph
-  ([goog-abs-path dirs] (deps-graph '() dirs))
+  ([goog-abs-path dirs]
+   (deps-graph goog-abs-path '() dirs))
   ([goog-abs-path deps dirs]
    (.computeDependencyCalls
      (DepsGenerator.
@@ -131,6 +132,11 @@
   (provides
     (transform-jsx (slurp (io/file "resources/StatusBarIOS.ios.js"))))
 
+  (deps-graph
+    (.getAbsolutePath (io/file "deps/closure-library/closure"))
+    ["resources"])
+
+  ;; Parsing example
   ;; based on http://slieb.org/blog/parseJavaScriptWithGoogleClosure/
   (let [config       (ParserRunner/createConfig
                        true Config$LanguageMode/ECMASCRIPT5 true nil)
@@ -145,7 +151,4 @@
       (.comments parse-result))
     (NodeUtil/visitPreOrder
       (.ast parse-result) visitor (Predicates/alwaysTrue)))
-
-  ;; the above is super useful but we should probably use a regex
-  ;; to grab @providesModules
   )
