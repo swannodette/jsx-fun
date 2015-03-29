@@ -2,11 +2,15 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as string]
             [cljs.closure :as cl])
-  (:import [com.google.common.base Predicates]
+  (:import [java.io File]
+           [com.google.common.base Predicates]
            [javax.script ScriptEngineManager]
            [com.google.javascript.jscomp
             ES6ModuleLoader ProcessCommonJSModules CompilerOptions SourceFile
-            CompilerOptions$LanguageMode NodeUtil NodeUtil$Visitor]
+            CompilerOptions$LanguageMode NodeUtil NodeUtil$Visitor
+            BasicErrorManager]
+           [com.google.javascript.jscomp.deps
+            DepsGenerator DepsGenerator$InclusionStrategy]
            [com.google.javascript.jscomp.parsing
             Config Config$LanguageMode ParserRunner]
            [com.google.javascript.rhino
@@ -70,6 +74,32 @@
       (println (Token/name (.getType node)))
       (when-let [js-doc (.getJSDocInfo node)]
         (println (.toStringVerbose js-doc))))))
+
+(defn js-files-in
+  "Return a sequence of all .js files in the given directory."
+  [dir]
+  (filter
+    #(let [name (.getName ^File %)]
+      (and (.endsWith name ".js")
+        (not= \. (first name))))
+    (file-seq dir)))
+
+(defn deps-graph
+  ([goog-abs-path dirs] (deps-graph '() dirs))
+  ([goog-abs-path deps dirs]
+   (.computeDependencyCalls
+     (DepsGenerator.
+       deps
+       (map #(SourceFile/fromFile %)
+         (mapcat (comp js-files-in io/file)
+           dirs))
+       DepsGenerator$InclusionStrategy/ALWAYS
+       goog-abs-path
+       (proxy [BasicErrorManager] []
+         (report [level error]
+           (println error))
+         (println [level error]
+           (println error)))))))
 
 ;(defn transform-commonjs
 ;  [filename src]
