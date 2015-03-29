@@ -109,10 +109,12 @@
    (compile dir "out"))
   ([dir outdir]
    (letfn [(dir? [^File x] (.isDirectory x))]
+     (.mkdir (io/file outdir))
      (doseq [file (remove dir? (file-seq (io/file dir)))]
-       (spit (io/file outdir (.getName file))
-         (transform-commonjs
-           (transform-jsx (slurp file))))))))
+       (let [out-file (io/file outdir (.getName file))]
+         (spit out-file
+           (transform-commonjs
+             (transform-jsx (slurp file)))))))))
 
 ;(defn transform-commonjs
 ;  [filename src]
