@@ -45,27 +45,28 @@
          (object-array [src options]))
        "code"))))
 
-(defn transform-commonjs
-  [filename src]
-  (let [js      [(SourceFile/fromCode filename src)]
-        options (set-options {:lang-in :es5 :pretty-print true}
-                  (CompilerOptions.))
-        comp    (doto (cl/make-closure-compiler)
-                  (.init '() js options))
-        root    (.parse comp (first js))]
-    (.process
-      (ProcessCommonJSModules. comp
-        (ES6ModuleLoader. comp "./")
-        false)
-      nil root)
-    (.toSource comp root)))
-
 (defn provides [^String src]
   (last
     (string/split
       (some #(when (re-find #"@providesModule" %) %)
         (string/split src #"\n"))
       #"\s+")))
+
+(defn transform-commonjs
+  ([src] (transform-commonjs (provides src) src))
+  ([provides src]
+   (let [js [(SourceFile/fromCode provides src)]
+         options (set-options {:lang-in :es5 :pretty-print true}
+                   (CompilerOptions.))
+         comp (doto (cl/make-closure-compiler)
+                (.init '() js options))
+         root (.parse comp (first js))]
+     (.process
+       (ProcessCommonJSModules. comp
+         (ES6ModuleLoader. comp "./")
+         false)
+       nil root)
+     (.toSource comp root))))
 
 (defn node-visitor []
   (reify
@@ -80,8 +81,8 @@
   [dir]
   (filter
     #(let [name (.getName ^File %)]
-      (and (.endsWith name ".js")
-        (not= \. (first name))))
+       (and (.endsWith name ".js")
+         (not= \. (first name))))
     (file-seq dir)))
 
 (defn deps-graph
@@ -121,12 +122,10 @@
   ;; we will have to extract this from @providesModule
   (println
     (transform-commonjs
-      "ScrollResponder.js"
       (transform-jsx (slurp (io/file "resources/ScrollResponder.js")))))
 
   (println
     (transform-commonjs
-      "StatusBarIOS"
       (transform-jsx (slurp (io/file "resources/StatusBarIOS.ios.js")))))
 
   (provides
