@@ -1,4 +1,5 @@
 (ns jsx-fun.core
+  (:refer-clojure :exclude [compile])
   (:require [clojure.java.io :as io]
             [clojure.string :as string]
             [cljs.closure :as cl])
@@ -103,6 +104,16 @@
          (println [level error]
            (println error)))))))
 
+(defn compile
+  ([dir]
+   (compile dir "out"))
+  ([dir outdir]
+   (letfn [(dir? [^File x] (.isDirectory x))]
+     (doseq [file (remove dir? (file-seq (io/file dir)))]
+       (spit (io/file outdir (.getName file))
+         (transform-commonjs
+           (transform-jsx (slurp file))))))))
+
 ;(defn transform-commonjs
 ;  [filename src]
 ;  (let [^List externs '()
@@ -135,6 +146,8 @@
   (deps-graph
     (.getAbsolutePath (io/file "deps/closure-library/closure"))
     ["resources"])
+
+  (compile "resources")ompile
 
   ;; Parsing example
   ;; based on http://slieb.org/blog/parseJavaScriptWithGoogleClosure/
