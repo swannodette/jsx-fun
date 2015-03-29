@@ -15,6 +15,12 @@ and run the following:
 mvn install
 ```
 
+Grab the dependencies
+
+```
+bin/deps
+```
+
 ## License
 
 Copyright © 2015 David Nolenm
