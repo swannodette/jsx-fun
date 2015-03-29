@@ -108,9 +108,12 @@
   ([dir]
    (compile dir "out"))
   ([dir outdir]
-   (letfn [(dir? [^File x] (.isDirectory x))]
+   (letfn [(dir? [^File x] (.isDirectory x))
+           (android? [^File x]
+             (some #{"android"} (string/split (.getName x) #"\.")))]
      (.mkdir (io/file outdir))
-     (doseq [file (remove dir? (file-seq (io/file dir)))]
+     (doseq [file (remove #(or (dir? %) (android? %))
+                    (file-seq (io/file dir)))]
        (let [out-file (io/file outdir (.getName file))]
          (spit out-file
            (transform-commonjs
@@ -147,7 +150,7 @@
 
   (deps-graph
     (.getAbsolutePath (io/file "deps/closure-library/closure"))
-    ["resources"])
+    ["out"])
 
   (compile "resources")
 
