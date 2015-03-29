@@ -147,7 +147,7 @@
     (.getAbsolutePath (io/file "deps/closure-library/closure"))
     ["resources"])
 
-  (compile "resources")ompile
+  (compile "resources")
 
   ;; Parsing example
   ;; based on http://slieb.org/blog/parseJavaScriptWithGoogleClosure/
