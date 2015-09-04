@@ -17,6 +17,20 @@
            [com.google.javascript.rhino
             Node Token ErrorReporter SimpleErrorReporter]))
 
+(defprotocol JSTransformer
+  (source-path [this])
+  (js-name [this]))
+
+(deftype JSX []
+  JSTransformer
+  (source-path [_] "com/facebook/jsx.js")
+  (js-name [_] "JSXTransformer"))
+
+(deftype Babel []
+  JSTransformer
+  (source-path [_] "io/babeljs/browser.min.js")
+  (js-name [_] "babel"))
+
 (defn set-options [opts ^CompilerOptions compiler-options]
   (doseq [[k v] opts]
     (condp = k
@@ -28,19 +42,23 @@
       (set! (.prettyPrint compiler-options) v)))
   compiler-options)
 
-(defn jsx-engine []
-  (let [nashorn (.getEngineByName (ScriptEngineManager.) "nashorn")]
-    (doto nashorn
-      (.eval "var global = {};")
-      (.eval (io/reader (io/resource "com/facebook/jsx.js"))))))
+(defn jsx-engine
+  ([] (jsx-engine (JSX.)))
+  ([transformer]
+   (let [nashorn (.getEngineByName (ScriptEngineManager.) "nashorn")]
+     (doto nashorn
+       (.eval "var global = {};")
+       (.eval (io/reader (io/resource (source-path transformer))))))))
 
 (defn transform-jsx
-  ([src] (transform-jsx (jsx-engine) src))
-  ([jsx-eng src]
-   (let [options
+  ([src]
+   (transform-jsx (JSX.) src))
+  ([transformer src]
+   (let [jsx-eng (jsx-engine transformer)
+         options
          (.eval jsx-eng
            "(function(){ return {stripTypes: true, harmony: true};})()")
-         jsxt (.eval jsx-eng "global.JSXTransformer")]
+         jsxt (.eval jsx-eng (str "global." (js-name transformer)))]
      (.get
        (.invokeMethod jsx-eng jsxt "transform"
          (object-array [src options]))
@@ -132,21 +150,26 @@
 
 (comment
   (spit
-    (io/file "resources/ScrollResponder.out.js")
-    (transform-jsx (slurp (io/file "resources/ScrollResponder.js"))))
+    (io/file "resources/inputs/ScrollResponder.out.js")
+    (transform-jsx (slurp (io/file "resources/inputs/ScrollResponder.js"))))
+
+  ;; still doesn't work
+  (spit
+    (io/file "resources/inputs/ScrollResponder.out.js")
+    (transform-jsx (Babel.) (slurp (io/file "resources/inputs/ScrollResponder.js"))))
 
   ;; the file name is used as the module name
   ;; we will have to extract this from @providesModule
   (println
     (transform-commonjs
-      (transform-jsx (slurp (io/file "resources/ScrollResponder.js")))))
+      (transform-jsx (slurp (io/file "resources/inputs/ScrollResponder.js")))))
 
   (println
     (transform-commonjs
-      (transform-jsx (slurp (io/file "resources/StatusBarIOS.ios.js")))))
+      (transform-jsx (slurp (io/file "resources/inputs/StatusBarIOS.ios.js")))))
 
   (provides
-    (transform-jsx (slurp (io/file "resources/StatusBarIOS.ios.js"))))
+    (transform-jsx (slurp (io/file "resources/inputs/StatusBarIOS.ios.js"))))
 
   (deps-graph
     (.getAbsolutePath (io/file "deps/closure-library/closure"))
@@ -160,7 +183,7 @@
                        true Config$LanguageMode/ECMASCRIPT5 true nil)
         err-reporter (SimpleErrorReporter.)
         source-file  (SourceFile/fromFile
-                       (io/file "resources/ScrollResponder.js"))
+                       (io/file "resources/inputs/ScrollResponder.js"))
         parse-result (ParserRunner/parse
                        source-file (.getCode source-file)
                        config err-reporter)
