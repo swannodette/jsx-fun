@@ -15,7 +15,8 @@
            [com.google.javascript.jscomp.parsing
             Config Config$LanguageMode ParserRunner]
            [com.google.javascript.rhino
-            Node Token ErrorReporter SimpleErrorReporter]))
+            Node Token ErrorReporter SimpleErrorReporter]
+           [org.mozilla.javascript Context]))
 
 (defprotocol JSTransformer
   (source-path [this])
@@ -28,7 +29,7 @@
 
 (deftype Babel []
   JSTransformer
-  (source-path [_] "io/babeljs/browser.min.js")
+  (source-path [_] "io/babeljs/browser.js")
   (js-name [_] "babel"))
 
 (defn set-options [opts ^CompilerOptions compiler-options]
@@ -198,4 +199,10 @@
     (doto nashorn
       (.eval "var global = {};")
       (.eval (io/reader (io/resource "META-INF/resources/webjars/lodash/3.10.1/lodash.js")))))
+
+  ;; another attempt
+  (let [cx    (Context/enter)
+        _     (.setOptimizationLevel cx -1)
+        scope (.initStandardObjects cx)]
+    (.evaluateString cx scope (slurp (io/resource "io/babeljs/browser.js")) "<cmd>" 1 nil))
   )
