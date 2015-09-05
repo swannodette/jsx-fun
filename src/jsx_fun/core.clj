@@ -192,4 +192,10 @@
       (.comments parse-result))
     (NodeUtil/visitPreOrder
       (.ast parse-result) visitor (Predicates/alwaysTrue)))
+
+  ;; lodash, by itself works
+  (let [nashorn (.getEngineByName (ScriptEngineManager.) "nashorn")]
+    (doto nashorn
+      (.eval "var global = {};")
+      (.eval (io/reader (io/resource "META-INF/resources/webjars/lodash/3.10.1/lodash.js")))))
   )
