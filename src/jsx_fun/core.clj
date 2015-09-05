@@ -29,7 +29,7 @@
 
 (deftype Babel []
   JSTransformer
-  (source-path [_] "io/babeljs/browser.js")
+  (source-path [_] "babel-core/browser.js")
   (js-name [_] "babel"))
 
 (defn set-options [opts ^CompilerOptions compiler-options]
@@ -201,8 +201,34 @@
       (.eval (io/reader (io/resource "META-INF/resources/webjars/lodash/3.10.1/lodash.js")))))
 
   ;; another attempt
-  (let [cx    (Context/enter)
-        _     (.setOptimizationLevel cx -1)
-        scope (.initStandardObjects cx)]
-    (.evaluateString cx scope (slurp (io/resource "io/babeljs/browser.js")) "<cmd>" 1 nil))
+  ;; works with weird fix to browser.js
+  ;; line 56607 has a Object.keys(obj).map expression that fails
+  (let [cx     (Context/enter)
+        _      (.setOptimizationLevel cx -1)
+        scope  (.initStandardObjects cx)
+        source (slurp (io/resource "babel-core/browser.js"))]
+    (.evaluateString cx scope "var global = {};" "<cmd>" 1 nil)
+    (.evaluateString cx scope source "<cmd>" 1 nil)
+    (.evaluateString cx scope "global.babel.transform(\"1\").code" "<cmd>" 1 nil))
+
+  (let [cx     (Context/enter)
+        _      (.setOptimizationLevel cx -1)
+        scope  (.initStandardObjects cx)
+        source (slurp (io/resource "babel-core/browser.js"))]
+    (.evaluateString cx scope "1 + 2" "<cmd>" 1 nil))
+
+  (let [cx     (Context/enter)
+        _      (.setOptimizationLevel cx -1)
+        scope  (.initStandardObjects cx)
+        source (slurp (io/resource "babel-core/browser.js"))]
+    (.evaluateString cx scope "Object.defineProperties" "<cmd>" 1 nil))
+
+  (let [cx     (Context/enter)
+        _      (.setOptimizationLevel cx -1)
+        scope  (.initStandardObjects cx)
+        source (slurp (io/resource "babel-core/browser.js"))]
+    (.evaluateString cx scope
+      "Object.keys({foo: 1}).map(function(n) { return n[0]; })"
+      "<cmd>" 1 nil))
+
   )
