@@ -201,9 +201,9 @@
       (.eval (io/reader (io/resource "META-INF/resources/webjars/lodash/3.10.1/lodash.js")))))
 
   (try
-    (let [cx (Context/enter)
-          _ (.setOptimizationLevel cx -1)
-          scope (.initStandardObjects cx)
+    (let [cx     (Context/enter)
+          _      (.setOptimizationLevel cx -1)
+          scope  (.initStandardObjects cx)
           source (slurp (io/resource "babel-core/browser.js"))]
       (.evaluateString cx scope "var global = {};" "shim.js" 1 nil)
       (.evaluateString cx scope source "babel.js" 1 nil))
@@ -236,6 +236,15 @@
         scope  (.initStandardObjects cx)
         source (slurp (io/resource "babel-core/browser.js"))]
     (.evaluateString cx scope
-      "null"
+      "Object.getOwnPropertySymbols"
       "<cmd>" 1 nil))
+
+  (let [cx     (Context/enter)
+        _      (.setOptimizationLevel cx -1)
+        scope  (.initStandardObjects cx)
+        source (slurp (io/resource "babel-core/browser.js"))]
+    (.evaluateString cx scope
+      "Object.getOwnPropertyNames"
+      "<cmd>" 1 nil))
+
   )
