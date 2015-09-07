@@ -202,6 +202,7 @@
 
   (try
     (let [cx     (Context/enter)
+          _      (.setLanguageVersion cx 200)
           _      (.setOptimizationLevel cx -1)
           scope  (.initStandardObjects cx)
           source (slurp (io/resource "babel-core/browser.js"))]
@@ -215,6 +216,7 @@
   ;; returns [object Object] in Rhino
   ;; FIXED in my Rhino fork
   (let [cx     (Context/enter)
+        _      (.setLanguageVersion cx 200)
         _      (.setOptimizationLevel cx -1)
         scope  (.initStandardObjects cx)
         source (slurp (io/resource "babel-core/browser.js"))]
@@ -224,6 +226,7 @@
 
   ;; FIXED in my Rhino fork
   (let [cx     (Context/enter)
+        _      (.setLanguageVersion cx 200)
         _      (.setOptimizationLevel cx -1)
         scope  (.initStandardObjects cx)
         source (slurp (io/resource "babel-core/browser.js"))]
@@ -231,6 +234,7 @@
       "Object.prototype.toString.call(undefined)"
       "<cmd>" 1 nil))
 
+  ;; undefined
   (let [cx     (Context/enter)
         _      (.setOptimizationLevel cx -1)
         scope  (.initStandardObjects cx)
@@ -238,6 +242,13 @@
     (.evaluateString cx scope
       "Object.getOwnPropertySymbols"
       "<cmd>" 1 nil))
+
+  (let [cx     (Context/enter)
+        _      (.setOptimizationLevel cx -1)
+        scope  (.initStandardObjects cx)
+        source (slurp (io/resource "babel-core/browser.js"))]
+    (.evaluateString cx scope
+      "Symbol" "<cmd>" 1 nil))
 
   (let [cx     (Context/enter)
         _      (.setOptimizationLevel cx -1)
