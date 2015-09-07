@@ -6,8 +6,7 @@
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.131"]
                  [com.facebook/jsx "0.13.1"]
-                 [org.webjars.bower/lodash "3.10.1"]
-                 [org.mozilla/rhino "1.7.7"]]
+                 [org.webjars.bower/lodash "3.10.1"]]
   :source-paths ["src"]
   :resource-paths ["node_modules"]
   :plugins [[cider/cider-nrepl "0.8.2"]])

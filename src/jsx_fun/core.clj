@@ -208,62 +208,34 @@
       (.evaluateString cx scope "var global = {};" "shim.js" 1 nil)
       (.evaluateString cx scope source "babel.js" 1 nil))
     (catch RhinoException e
+      (println e)
       (println (.getScriptStackTrace e))))
-
-  ;; another attempt
-  ;; works with weird fix to browser.js
-  ;; line 56607 has a Object.keys(obj).map expression that fails
-  (let [cx     (Context/enter)
-        _      (.setOptimizationLevel cx -1)
-        scope  (.initStandardObjects cx)
-        source (slurp (io/resource "babel-core/browser.js"))]
-    (.evaluateString cx scope "var global = {};" "<cmd>" 1 nil)
-    (.evaluateString cx scope source "<cmd>" 1 nil)
-    (.evaluateString cx scope "global.babel.transform(\"1\").code" "<cmd>" 1 nil))
-
-  (let [cx     (Context/enter)
-        _      (.setOptimizationLevel cx -1)
-        scope  (.initStandardObjects cx)
-        source (slurp (io/resource "babel-core/browser.js"))]
-    (.evaluateString cx scope "1 + 2" "<cmd>" 1 nil))
-
-  (let [cx     (Context/enter)
-        _      (.setOptimizationLevel cx -1)
-        scope  (.initStandardObjects cx)
-        source (slurp (io/resource "babel-core/browser.js"))]
-    (.evaluateString cx scope "Object.defineProperties" "<cmd>" 1 nil))
-
-  (let [cx     (Context/enter)
-        _      (.setOptimizationLevel cx -1)
-        scope  (.initStandardObjects cx)
-        source (slurp (io/resource "babel-core/browser.js"))]
-    (.evaluateString cx scope
-      "(function(){var obj = {foo: 1}; return Object.keys(obj).map(function(name){return obj[name];})})()"
-      "<cmd>" 1 nil))
-
-  (let [cx     (Context/enter)
-        _      (.setOptimizationLevel cx -1)
-        scope  (.initStandardObjects cx)
-        source (slurp (io/resource "babel-core/browser.js"))]
-    (.evaluateString cx scope
-      "function Type() { this.foo = 1 }; Object.keys(new Type());"
-      "<cmd>" 1 nil))
-
-  (let [cx     (Context/enter)
-        _      (.setOptimizationLevel cx -1)
-        scope  (.initStandardObjects cx)
-        source (slurp (io/resource "babel-core/browser.js"))]
-    (.evaluateString cx scope
-      "Object.keys(null)"
-      "<cmd>" 1 nil))
 
   ;; returns [object Null] in most engines
   ;; returns [object Object] in Rhino
+  ;; FIXED in my Rhino fork
   (let [cx     (Context/enter)
         _      (.setOptimizationLevel cx -1)
         scope  (.initStandardObjects cx)
         source (slurp (io/resource "babel-core/browser.js"))]
     (.evaluateString cx scope
       "Object.prototype.toString.call(null)"
+      "<cmd>" 1 nil))
+
+  ;; FIXED in my Rhino fork
+  (let [cx     (Context/enter)
+        _      (.setOptimizationLevel cx -1)
+        scope  (.initStandardObjects cx)
+        source (slurp (io/resource "babel-core/browser.js"))]
+    (.evaluateString cx scope
+      "Object.prototype.toString.call(undefined)"
+      "<cmd>" 1 nil))
+
+  (let [cx     (Context/enter)
+        _      (.setOptimizationLevel cx -1)
+        scope  (.initStandardObjects cx)
+        source (slurp (io/resource "babel-core/browser.js"))]
+    (.evaluateString cx scope
+      "null"
       "<cmd>" 1 nil))
   )
