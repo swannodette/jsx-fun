@@ -235,6 +235,11 @@
       "<cmd>" 1 nil))
 
   ;; undefined
+  ;; this is because Babel shims Symbol and hasSymbol flag gets set to true
+  ;; in the isNaN module which then assumes Object.getOwnPropertySymbols
+  ;; works.
+  ;; it appears Object.getOwnPropertySymbols should also get shimmed but this
+  ;; doesn't seem to be the case for some reason.
   (let [cx     (Context/enter)
         _      (.setOptimizationLevel cx -1)
         scope  (.initStandardObjects cx)
